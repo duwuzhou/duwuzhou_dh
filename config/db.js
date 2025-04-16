@@ -1,18 +1,15 @@
-const mysql = require('mysql2/promise');
-const fs = require('fs');
-
-// 修正配置文件路径为相对项目根目录的路径
-const config = JSON.parse(fs.readFileSync('./config/config.json')).db;
+const mysql = require("mysql2/promise");
+require('dotenv').config();
 
 const pool = mysql.createPool({
-  host: config.host,
-  port: config.port,
-  user: config.user,
-  password: config.password,
-  database: config.database,
-  waitForConnections: config.waitForConnections,
-  connectionLimit: config.connectionLimit,
-  queueLimit: config.queueLimit
+  host: process.env.DB_HOST,
+  port: parseInt(process.env.DB_PORT),
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_DATABASE,
+  waitForConnections: process.env.DB_WAIT_FOR_CONNECTIONS === 'true',
+  connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT),
+  queueLimit: parseInt(process.env.DB_QUEUE_LIMIT)
 });
 
 module.exports = pool;
