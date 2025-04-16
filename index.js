@@ -25,7 +25,15 @@ const articlesRouter = require('./routes/articles');
 app.use('/users', usersRouter);
 app.use('/articles', articlesRouter);
 
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send('服务器内部错误');
+});
+
+pool.getConnection()
+  .then(() => console.log('成功连接数据库'))
+  .catch(err => console.error('数据库连接失败:', err));
+
 app.listen(port, () => {
-  
   console.log(`服务器运行在:${port}`);
 });

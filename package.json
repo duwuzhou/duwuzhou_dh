@@ -4,10 +4,7 @@
   "description": "最基本的Node.js后端",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "build": "webpack --config webpack.config.js",
-    "dev": "webpack --config webpack.config.js --watch",
-    "postbuild": "node index.js"
+    "start": "node index.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
@@ -16,10 +13,6 @@
     "mysql2": "^3.14.0"
   },
   "devDependencies": {
-    "copy-webpack-plugin": "^13.0.0",
-    "dotenv-webpack": "^8.1.0",
-    "webpack": "^5.89.0",
-    "webpack-cli": "^5.1.4",
-    "webpack-node-externals": "^3.0.0"
+    "@vercel/ncc": "^0.38.3"
   }
 }
