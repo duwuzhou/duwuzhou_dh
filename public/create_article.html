@@ -52,6 +52,12 @@
         <label for="tags">标签 (逗号分隔):</label>
         <input type="text" id="tags" name="tags" placeholder="标签1,标签2,标签3">
         
+        <label for="content">文章内容:</label>
+        <textarea id="content" name="content" rows="10" placeholder="请输入文章详细内容..." required></textarea>
+        
+        <label for="password">管理员密码:</label>
+        <input type="password" id="password" name="password" required placeholder="请输入管理员密码">
+        
         <button type="submit">提交</button>
     </form>
 
@@ -63,7 +69,9 @@
                 title: document.getElementById('title').value,
                 summary: document.getElementById('summary').value,
                 date: document.getElementById('date').value,
-                tags: document.getElementById('tags').value.split(',').map(tag => tag.trim())
+                tags: document.getElementById('tags').value.split(',').map(tag => tag.trim()),
+                content: document.getElementById('content').value,
+                password: document.getElementById('password').value
             };
             
             try {

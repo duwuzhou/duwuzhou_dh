@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Article = require('../models/article');
 const cors = require('cors');
+const security = require('../config/security');
 
 router.use(cors({
   origin: ['https://duwuzhou.github.io'],
@@ -20,19 +21,19 @@ router.get('/', async (req, res) => {
   }
 });
 
-// 创建新文章
-router.post('/', async (req, res) => {
+// 创建新文章（需要密码保护）
+router.post('/', security.authenticatePassword, async (req, res) => {
   try {
-    const { title, summary, date, tags } = req.body;
-    const newArticle = await Article.create({ title, summary, date, tags });
+    const { title, summary, date, tags, content } = req.body;
+    const newArticle = await Article.create({ title, summary, date, tags, content });
     res.status(201).json(newArticle);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 });
 
-// 删除文章
-router.delete('/:id', async (req, res) => {
+// 删除文章（需要密码保护）
+router.delete('/:id', security.authenticatePassword, async (req, res) => {
   try {
     const { id } = req.params;
     const deleted = await Article.delete(id);

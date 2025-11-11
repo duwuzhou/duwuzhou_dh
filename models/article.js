@@ -4,7 +4,7 @@ class Article {
   static async findAll({ page = 1, pageSize = 10 } = {}) {
     const offset = (page - 1) * pageSize;
     const [rows] = await pool.query(
-      `SELECT a.*, GROUP_CONCAT(t.name) AS tag_names 
+      `SELECT a.id, a.title, a.summary, a.date, a.content, GROUP_CONCAT(t.name) AS tag_names 
        FROM articles a 
        LEFT JOIN article_tags at ON a.id = at.article_id 
        LEFT JOIN tags t ON at.tag_id = t.id 
@@ -20,15 +20,15 @@ class Article {
     }));
   }
 
-  static async create({ title, summary, date, tags }) {
+  static async create({ title, summary, date, tags, content }) {
     const connection = await pool.getConnection();
     try {
       await connection.beginTransaction();
       
       // 插入文章
       const [articleResult] = await connection.query(
-        'INSERT INTO articles (title, summary, date) VALUES (?, ?, ?)',
-        [title, summary, date]
+        'INSERT INTO articles (title, summary, date, content) VALUES (?, ?, ?, ?)',
+        [title, summary, date, content]
       );
       
       // 处理标签
@@ -60,7 +60,7 @@ class Article {
       }
       
       await connection.commit();
-      return { id: articleId, title, summary, date, tags };
+      return { id: articleId, title, summary, date, content, tags };
     } catch (err) {
       await connection.rollback();
       throw err;
