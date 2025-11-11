@@ -29,9 +29,22 @@
             border-radius: 4px;
             color: white;
             cursor: pointer;
+            margin-left: 8px;
         }
         .delete-btn:hover {
             background-color: #c82333;
+        }
+        .edit-btn {
+            background-color: #007bff;
+            padding: 5px 10px;
+            border-radius: 4px;
+            color: white;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .edit-btn:hover {
+            background-color: #0056b3;
         }
         .article-summary {
             color: #666;
@@ -143,7 +156,10 @@
                     <div class="article-item" data-id="${article.id}">
                         <div class="article-header">
                             <h3>${article.title}</h3>
-                            <div class="delete-btn" onclick="deleteArticle(${article.id})">删除</div>
+                            <div>
+                                <a href="edit_article.html?id=${article.id}" class="edit-btn">编辑</a>
+                                <div class="delete-btn" onclick="deleteArticle(${article.id})">删除</div>
+                            </div>
                         </div>
                         <p class="article-summary">摘要：${article.summary || '无摘要'}</p>
                         <button class="toggle-content-btn" onclick="toggleContent(${article.id})">查看全文</button>

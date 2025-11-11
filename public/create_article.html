@@ -31,9 +31,16 @@
             border: none;
             border-radius: 4px;
             cursor: pointer;
+            margin-right: 10px;
         }
         button:hover {
             background-color: #0056b3;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
         }
     </style>
 </head>
@@ -58,7 +65,10 @@
         <label for="password">管理员密码:</label>
         <input type="password" id="password" name="password" required placeholder="请输入管理员密码">
         
-        <button type="submit">提交</button>
+        <div>
+            <button type="submit">提交</button>
+            <button type="button" class="btn-secondary" onclick="window.location.href='/article_list.html'">返回列表</button>
+        </div>
     </form>
 
     <script>

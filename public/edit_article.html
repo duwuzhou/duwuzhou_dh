@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>编辑文章</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        label {
+            font-weight: bold;
+        }
+        input, textarea {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="loading" id="loading">
+        正在加载文章数据...
+    </div>
+    
+    <div id="editForm" style="display: none;">
+        <h1>编辑文章</h1>
+        <div id="message"></div>
+        
+        <form id="articleForm">
+            <label for="title">标题:</label>
+            <input type="text" id="title" name="title" required>
+            
+            <label for="summary">摘要:</label>
+            <textarea id="summary" name="summary" rows="4" required></textarea>
+            
+            <label for="date">日期:</label>
+            <input type="date" id="date" name="date" required>
+            
+            <label for="tags">标签 (逗号分隔):</label>
+            <input type="text" id="tags" name="tags" placeholder="标签1,标签2,标签3">
+            
+            <label for="content">文章内容:</label>
+            <textarea id="content" name="content" rows="10" placeholder="请输入文章详细内容..." required></textarea>
+            
+            <label for="password">管理员密码:</label>
+            <input type="password" id="password" name="password" required placeholder="请输入管理员密码">
+            
+            <div>
+                <button type="submit">更新文章</button>
+                <button type="button" class="btn-secondary" onclick="window.location.href='/article_list.html'">返回列表</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        let articleId;
+        
+        // 获取URL参数中的文章ID
+        function getArticleIdFromUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('id');
+        }
+
+        // 获取文章数据
+        async function loadArticle() {
+            if (!articleId) {
+                document.getElementById('loading').innerHTML = 
+                    '<div class="error">未指定文章ID，请从文章列表页面选择要编辑的文章</div>';
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/articles/${articleId}`);
+                
+                if (!response.ok) {
+                    throw new Error('文章不存在或已被删除');
+                }
+                
+                const article = await response.json();
+                
+                // 自动填充表单字段
+                document.getElementById('title').value = article.title;
+                document.getElementById('summary').value = article.summary || '';
+                document.getElementById('date').value = new Date(article.date).toISOString().split('T')[0];
+                document.getElementById('tags').value = article.tags ? article.tags.join(', ') : '';
+                document.getElementById('content').value = article.content;
+                
+                // 隐藏加载提示，显示编辑表单
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('editForm').style.display = 'block';
+                
+            } catch (error) {
+                document.getElementById('loading').innerHTML = 
+                    `<div class="error">加载文章失败: ${error.message}</div>`;
+            }
+        }
+        
+        // 显示消息
+        function showMessage(message, type = 'success') {
+            const messageDiv = document.getElementById('message');
+            messageDiv.className = type;
+            messageDiv.textContent = message;
+            messageDiv.style.display = 'block';
+            
+            // 3秒后隐藏消息
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 3000);
+        }
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            articleId = getArticleIdFromUrl();
+            
+            if (!articleId) {
+                document.getElementById('loading').innerHTML = 
+                    '<div class="error">未指定文章ID，请从文章列表页面选择要编辑的文章</div>';
+                return;
+            }
+            
+            loadArticle();
+        });
+        
+        // 表单提交
+        document.getElementById('articleForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = {
+                title: document.getElementById('title').value,
+                summary: document.getElementById('summary').value,
+                date: document.getElementById('date').value,
+                tags: document.getElementById('tags').value.split(',').map(tag => tag.trim()).filter(tag => tag),
+                content: document.getElementById('content').value,
+                password: document.getElementById('password').value
+            };
+            
+            try {
+                const response = await fetch(`/articles/${articleId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-password': formData.password
+                    },
+                    body: JSON.stringify({
+                        title: formData.title,
+                        summary: formData.summary,
+                        date: formData.date,
+                        tags: formData.tags,
+                        content: formData.content
+                    })
+                });
+                
+                if (response.ok) {
+                    showMessage('文章更新成功！', 'success');
+                    setTimeout(() => {
+                        window.location.href = '/article_list.html';
+                    }, 1500);
+                } else {
+                    const errorData = await response.json();
+                    showMessage(`更新失败: ${errorData.message}`, 'error');
+                }
+            } catch (error) {
+                showMessage(`请求错误: ${error.message}`, 'error');
+            }
+        });
+    </script>
+</body>
+</html>

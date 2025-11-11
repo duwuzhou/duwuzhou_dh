@@ -53,8 +53,7 @@ async function startServer() {
     // 9. 启动 HTTP 服务器
     const server = app.listen(config.port, () => {
       console.log(`🚀 服务器运行在: http://localhost:${config.port}`);
-      console.log(`📄 文章列表: http://localhost:${config.port}/article_list.html`);
-      console.log(`📝 创建文章: http://localhost:${config.port}/create_article.html`);
+
       console.log(`🏥 健康检查: http://localhost:${config.port}/health`);
     });
     
