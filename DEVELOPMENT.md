@@ -1,669 +1,664 @@
-# 开发指南
+# 💻 开发指南
 
-## 项目概述
+文章管理系统后端开发完整指南。
 
-这是一个基于Node.js和Express的后端API项目，提供了文章管理和用户管理功能。本指南将帮助开发者了解项目结构、扩展功能以及最佳实践。
+## 📋 目录
 
-## 技术栈
+- [开发环境搭建](#开发环境搭建)
+- [项目架构](#项目架构)
+- [代码规范](#代码规范)
+- [开发流程](#开发流程)
+- [测试指南](#测试指南)
+- [调试技巧](#调试技巧)
+- [常见问题](#常见问题)
 
-- **运行时**: Node.js
-- **框架**: Express.js
-- **数据库**: MySQL (使用 mysql2 连接器)
-- **ORM/查询**: 原生SQL查询 + 连接池
-- **部署**: Vercel
-- **开发工具**: 任何现代IDE/编辑器
+## 🛠️ 开发环境搭建
 
-## 项目结构详解
+### 必需工具
 
-```
-hd/
-├── config/
-│   └── db.js              # 数据库连接配置，使用连接池
-├── models/
-│   └── article.js         # 文章数据模型，包含业务逻辑
-├── public/                # 静态前端文件
-│   ├── article_list.html  # 文章列表页面
-│   └── create_article.html # 创建文章页面
-├── routes/                # API路由定义
-│   ├── articles.js        # 文章相关API端点
-│   └── users.js           # 用户相关API端点
-├── index.js               # 主应用入口点
-├── package.json           # 项目依赖和脚本
-├── vercel.json            # Vercel部署配置
-└── README.md              # 项目说明文档
-```
+| 工具 | 版本 | 用途 |
+|------|------|------|
+| Node.js | >= 14.0.0 | JavaScript 运行环境 |
+| MySQL | >= 5.7 | 数据库 |
+| Git | >= 2.0 | 版本控制 |
+| VS Code | 最新版 | 代码编辑器（推荐） |
 
-## 核心组件分析
+### 推荐 VS Code 插件
 
-### 1. 数据库层 (config/db.js)
-
-```javascript
-const mysql = require("mysql2/promise");
-require('dotenv').config();
-
-const pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  port: parseInt(process.env.DB_PORT),
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_DATABASE,
-  waitForConnections: process.env.DB_WAIT_FOR_CONNECTIONS === 'true',
-  connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT),
-  queueLimit: parseInt(process.env.DB_QUEUE_LIMIT)
-});
-
-module.exports = pool;
-```
-
-**关键特性:**
-- 使用连接池管理数据库连接
-- 支持环境变量配置
-- 异步/等待模式
-
-### 2. 模型层 (models/article.js)
-
-文章模型包含三个主要方法：
-- `findAll()`: 获取文章列表
-- `create()`: 创建新文章（包含事务处理）
-- `delete()`: 删除文章（包含事务处理）
-
-**事务处理示例:**
-```javascript
-static async create({ title, summary, date, tags }) {
-  const connection = await pool.getConnection();
-  try {
-    await connection.beginTransaction();
-    // 业务逻辑...
-    await connection.commit();
-  } catch (err) {
-    await connection.rollback();
-    throw err;
-  } finally {
-    connection.release();
-  }
+```json
+{
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "ms-vscode.vscode-typescript-next",
+    "formulahendry.auto-rename-tag",
+    "christian-kohler.path-intellisense"
+  ]
 }
 ```
 
-### 3. 路由层 (routes/articles.js)
+### 环境配置
 
-每个路由处理函数都包含：
-- 错误处理
-- 适当的HTTP状态码
-- CORS支持
-
-## 开发工作流
-
-### 1. 本地开发环境设置
+**1. 克隆项目：**
 
 ```bash
-# 1. 克隆项目
-git clone [your-repo-url]
+git clone <repository-url>
 cd hd
+```
 
-# 2. 安装依赖
+**2. 安装依赖：**
+
+```bash
 npm install
+```
 
-# 3. 创建环境变量文件
+**3. 配置环境变量：**
+
+```bash
 cp .env.example .env
-# 编辑 .env 文件配置数据库信息
+# 编辑 .env 文件，填入实际配置
+```
 
-# 4. 设置数据库
-# 创建数据库并执行建表SQL
+**4. 初始化数据库：**
 
-# 5. 启动开发服务器
+```bash
+mysql -u root -p < database/schema.sql
+```
+
+**5. 启动开发服务器：**
+
+```bash
 npm start
 ```
 
-### 2. 数据库设置
+## 🏗️ 项目架构
+
+### 目录结构详解
+
+```
+hd/
+├── config/                 # 配置模块
+│   ├── server.js          # 服务器配置（端口、CORS）
+│   ├── security.js        # 安全配置（限流、认证）
+│   ├── database.js        # 数据库管理
+│   ├── db.js             # 数据库连接池
+│   └── routes.js         # 路由配置
+├── models/                # 数据模型
+│   └── article.js        # 文章模型
+├── routes/                # API 路由
+│   └── articles.js       # 文章路由
+├── public/                # 静态文件
+├── index.js              # 应用入口
+└── package.json          # 项目配置
+```
+
+### 架构设计
+
+```
+┌─────────────────────────────────────────┐
+│           Client (Browser/App)          │
+└──────────────────┬──────────────────────┘
+                   │ HTTP/HTTPS
+┌──────────────────▼──────────────────────┐
+│         Express Application             │
+│  ┌────────────────────────────────────┐ │
+│  │  Security Middleware               │ │
+│  │  - CORS                            │ │
+│  │  - Rate Limiting                   │ │
+│  │  - Authentication                  │ │
+│  └────────────────┬───────────────────┘ │
+│  ┌────────────────▼───────────────────┐ │
+│  │  Routes Layer                      │ │
+│  │  - /articles                       │ │
+│  │  - /health                         │ │
+│  └────────────────┬───────────────────┘ │
+│  ┌────────────────▼───────────────────┐ │
+│  │  Business Logic (Models)           │ │
+│  │  - Article CRUD                    │ │
+│  │  - Tag Management                  │ │
+│  └────────────────┬───────────────────┘ │
+└───────────────────┼─────────────────────┘
+                    │
+┌───────────────────▼─────────────────────┐
+│         MySQL Database                  │
+│  ┌────────────────────────────────────┐ │
+│  │  Tables:                           │ │
+│  │  - articles                        │ │
+│  │  - tags                            │ │
+│  │  - article_tags                    │ │
+│  └────────────────────────────────────┘ │
+└─────────────────────────────────────────┘
+```
+
+### 请求流程
+
+```
+1. Client Request
+   ↓
+2. Security Middleware
+   - CORS Check
+   - Rate Limiting
+   - Authentication (if needed)
+   ↓
+3. Route Handler
+   - Parse Request
+   - Validate Input
+   ↓
+4. Model Layer
+   - Database Query
+   - Business Logic
+   ↓
+5. Response
+   - Format Data
+   - Send JSON
+```
+
+## 📝 代码规范
+
+### JavaScript 规范
+
+**1. 使用 ES6+ 语法：**
+
+```javascript
+// ✅ 推荐：使用 const/let
+const articles = await Article.findAll();
+let count = 0;
+
+// ❌ 避免：使用 var
+var articles = await Article.findAll();
+```
+
+**2. 异步操作使用 async/await：**
+
+```javascript
+// ✅ 推荐：async/await
+async function getArticles() {
+  try {
+    const articles = await Article.findAll();
+    return articles;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}
+
+// ❌ 避免：回调地狱
+function getArticles(callback) {
+  Article.findAll((err, articles) => {
+    if (err) return callback(err);
+    callback(null, articles);
+  });
+}
+```
+
+**3. 使用箭头函数：**
+
+```javascript
+// ✅ 推荐
+const numbers = [1, 2, 3].map(n => n * 2);
+
+// ❌ 避免
+const numbers = [1, 2, 3].map(function(n) {
+  return n * 2;
+});
+```
+
+**4. 解构赋值：**
+
+```javascript
+// ✅ 推荐
+const { title, summary, date } = req.body;
+
+// ❌ 避免
+const title = req.body.title;
+const summary = req.body.summary;
+const date = req.body.date;
+```
+
+### 命名规范
+
+**1. 变量和函数：camelCase**
+
+```javascript
+const articleList = [];
+function getArticleById(id) {}
+```
+
+**2. 类名：PascalCase**
+
+```javascript
+class Article {}
+class ArticleController {}
+```
+
+**3. 常量：UPPER_SNAKE_CASE**
+
+```javascript
+const MAX_PAGE_SIZE = 100;
+const DEFAULT_PORT = 3000;
+```
+
+**4. 文件名：kebab-case**
+
+```
+article-controller.js
+user-service.js
+```
+
+### 注释规范
+
+**1. 函数注释：**
+
+```javascript
+/**
+ * 获取所有文章
+ * @param {Object} options - 查询选项
+ * @param {number} options.page - 页码
+ * @param {number} options.pageSize - 每页数量
+ * @returns {Promise<Object>} 文章列表和分页信息
+ */
+static async findAll({ page = 1, pageSize = 10 } = {}) {
+  // 实现代码
+}
+```
+
+**2. 复杂逻辑注释：**
+
+```javascript
+// 验证排序字段，防止 SQL 注入
+const validSortFields = ['id', 'title', 'date', 'created_at'];
+const sortField = validSortFields.includes(sortBy) ? sortBy : 'date';
+```
+
+### 错误处理
+
+**1. 统一错误格式：**
+
+```javascript
+try {
+  const article = await Article.findById(id);
+  if (!article) {
+    return res.status(404).json({
+      success: false,
+      error: 'Not Found',
+      message: '文章未找到'
+    });
+  }
+  res.json({ success: true, data: article });
+} catch (error) {
+  console.error('获取文章失败:', error);
+  res.status(500).json({
+    success: false,
+    error: 'Internal Server Error',
+    message: '获取文章失败',
+    details: error.message
+  });
+}
+```
+
+**2. 输入验证：**
+
+```javascript
+// 在处理前验证所有输入
+if (!title || !summary || !date) {
+  return res.status(400).json({
+    success: false,
+    error: 'Bad Request',
+    message: '缺少必填字段',
+    required: ['title', 'summary', 'date']
+  });
+}
+```
+
+## 🔄 开发流程
+
+### 添加新功能
+
+**1. 创建功能分支：**
+
+```bash
+git checkout -b feature/new-feature
+```
+
+**2. 开发步骤：**
+
+```
+a. 设计数据模型（如需要）
+   ↓
+b. 创建数据库表（如需要）
+   ↓
+c. 编写 Model 层代码
+   ↓
+d. 编写 Route 层代码
+   ↓
+e. 测试功能
+   ↓
+f. 更新文档
+```
+
+**3. 提交代码：**
+
+```bash
+git add .
+git commit -m "feat: 添加新功能描述"
+git push origin feature/new-feature
+```
+
+### 修复 Bug
+
+**1. 创建修复分支：**
+
+```bash
+git checkout -b fix/bug-description
+```
+
+**2. 修复步骤：**
+
+```
+a. 复现问题
+   ↓
+b. 定位问题代码
+   ↓
+c. 编写修复代码
+   ↓
+d. 测试修复效果
+   ↓
+e. 提交代码
+```
+
+### Git 提交规范
+
+```bash
+# 新功能
+git commit -m "feat: 添加文章搜索功能"
+
+# Bug 修复
+git commit -m "fix: 修复分页计算错误"
+
+# 文档更新
+git commit -m "docs: 更新 API 文档"
+
+# 代码重构
+git commit -m "refactor: 重构文章查询逻辑"
+
+# 性能优化
+git commit -m "perf: 优化数据库查询性能"
+
+# 测试相关
+git commit -m "test: 添加文章创建测试"
+```
+
+## 🧪 测试指南
+
+### 手动测试
+
+**1. 使用 cURL：**
+
+```bash
+# 测试健康检查
+curl http://localhost:3000/health
+
+# 测试获取文章列表
+curl http://localhost:3000/articles
+
+# 测试创建文章
+curl -X POST http://localhost:3000/articles \
+  -H "Content-Type: application/json" \
+  -H "x-password: admin123" \
+  -d '{"title":"测试","summary":"测试","date":"2024-12-25"}'
+```
+
+**2. 使用 Postman：**
+
+创建 Postman Collection：
+
+```json
+{
+  "info": {
+    "name": "Article API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Get Articles",
+      "request": {
+        "method": "GET",
+        "url": "http://localhost:3000/articles"
+      }
+    },
+    {
+      "name": "Create Article",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "x-password",
+            "value": "admin123"
+          }
+        ],
+        "url": "http://localhost:3000/articles",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"title\":\"测试\",\"summary\":\"测试\",\"date\":\"2024-12-25\"}"
+        }
+      }
+    }
+  ]
+}
+```
+
+### 测试清单
+
+**功能测试：**
+
+- [ ] 获取文章列表
+- [ ] 获取单篇文章
+- [ ] 创建文章
+- [ ] 更新文章
+- [ ] 删除文章
+- [ ] 分页功能
+- [ ] 排序功能
+- [ ] 标签关联
+
+**安全测试：**
+
+- [ ] 密码认证
+- [ ] 请求限流
+- [ ] SQL 注入防护
+- [ ] XSS 防护
+- [ ] CORS 配置
+
+**性能测试：**
+
+- [ ] 并发请求处理
+- [ ] 数据库连接池
+- [ ] 响应时间
+- [ ] 内存使用
+
+## 🐛 调试技巧
+
+### 日志调试
+
+**1. 添加调试日志：**
+
+```javascript
+console.log('📝 请求参数:', req.body);
+console.log('🔍 查询结果:', articles);
+console.log('⚠️ 警告信息:', warning);
+console.error('❌ 错误信息:', error);
+```
+
+**2. 使用 debug 模块：**
+
+```javascript
+const debug = require('debug')('app:article');
+
+debug('查询文章列表', { page, pageSize });
+```
+
+### 数据库调试
+
+**1. 查看执行的 SQL：**
+
+```javascript
+const [rows] = await pool.query(
+  'SELECT * FROM articles WHERE id = ?',
+  [id]
+);
+console.log('执行的 SQL:', pool.format('SELECT * FROM articles WHERE id = ?', [id]));
+```
+
+**2. 分析慢查询：**
 
 ```sql
--- 创建数据库
-CREATE DATABASE IF NOT EXISTS article_management;
-USE article_management;
+-- 启用慢查询日志
+SET GLOBAL slow_query_log = 'ON';
+SET GLOBAL long_query_time = 1;
 
--- 创建文章表
-CREATE TABLE articles (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  title VARCHAR(255) NOT NULL,
-  summary TEXT,
-  date DATE,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
-
--- 创建标签表
-CREATE TABLE tags (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(100) UNIQUE NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- 创建文章标签关联表
-CREATE TABLE article_tags (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  article_id INT,
-  tag_id INT,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (article_id) REFERENCES articles(id) ON DELETE CASCADE,
-  FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
-);
-
--- 创建索引优化查询性能
-CREATE INDEX idx_articles_date ON articles(date);
-CREATE INDEX idx_tags_name ON tags(name);
-CREATE INDEX idx_article_tags_article_id ON article_tags(article_id);
+-- 查看慢查询
+SELECT * FROM mysql.slow_log;
 ```
 
-### 3. 环境变量配置
+### 性能分析
 
-创建 `.env` 文件：
-
-```env
-# 开发环境
-NODE_ENV=development
-
-# 数据库配置
-DB_HOST=localhost
-DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=your_password
-DB_DATABASE=article_management
-DB_WAIT_FOR_CONNECTIONS=true
-DB_CONNECTION_LIMIT=10
-DB_QUEUE_LIMIT=0
-
-# 服务器配置
-PORT=3000
-```
-
-## 扩展功能指南
-
-### 1. 添加新的API端点
-
-#### 步骤1: 创建新的路由文件
-
-在 `routes/` 目录下创建 `categories.js`：
-
-```javascript
-const express = require('express');
-const router = express.Router();
-const pool = require('../config/db');
-
-// 获取所有分类
-router.get('/', async (req, res) => {
-  try {
-    const [rows] = await pool.query('SELECT * FROM categories ORDER BY name');
-    res.json(rows);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-// 创建新分类
-router.post('/', async (req, res) => {
-  try {
-    const { name, description } = req.body;
-    const [result] = await pool.query(
-      'INSERT INTO categories (name, description) VALUES (?, ?)',
-      [name, description]
-    );
-    res.status(201).json({ id: result.insertId, name, description });
-  } catch (err) {
-    res.status(400).json({ message: err.message });
-  }
-});
-
-module.exports = router;
-```
-
-#### 步骤2: 在主应用中注册路由
-
-在 `index.js` 中添加：
-
-```javascript
-const categoriesRouter = require('./routes/categories');
-app.use('/categories', categoriesRouter);
-```
-
-### 2. 添加新的数据模型
-
-创建 `models/category.js`：
-
-```javascript
-const pool = require('../config/db');
-
-class Category {
-  static async findAll() {
-    const [rows] = await pool.query('SELECT * FROM categories ORDER BY name');
-    return rows;
-  }
-
-  static async create({ name, description }) {
-    const [result] = await pool.query(
-      'INSERT INTO categories (name, description) VALUES (?, ?)',
-      [name, description]
-    );
-    return { id: result.insertId, name, description };
-  }
-
-  static async findById(id) {
-    const [rows] = await pool.query('SELECT * FROM categories WHERE id = ?', [id]);
-    return rows[0];
-  }
-
-  static async update(id, { name, description }) {
-    const [result] = await pool.query(
-      'UPDATE categories SET name = ?, description = ? WHERE id = ?',
-      [name, description, id]
-    );
-    return result.affectedRows > 0;
-  }
-
-  static async delete(id) {
-    const [result] = await pool.query('DELETE FROM categories WHERE id = ?', [id]);
-    return result.affectedRows > 0;
-  }
-}
-
-module.exports = Category;
-```
-
-### 3. 添加身份验证
-
-#### 安装JWT库
+**1. 使用 Node.js Profiler：**
 
 ```bash
-npm install jsonwebtoken bcryptjs
+node --prof index.js
+node --prof-process isolate-*.log > profile.txt
 ```
 
-#### 创建中间件
-
-在 `middleware/auth.js`：
+**2. 监控内存使用：**
 
 ```javascript
-const jwt = require('jsonwebtoken');
-
-const auth = (req, res, next) => {
-  const token = req.header('Authorization')?.replace('Bearer ', '');
-  
-  if (!token) {
-    return res.status(401).json({ message: '访问被拒绝' });
-  }
-  
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
-    next();
-  } catch (err) {
-    res.status(400).json({ message: '无效令牌' });
-  }
-};
-
-module.exports = auth;
+setInterval(() => {
+  const used = process.memoryUsage();
+  console.log('内存使用:', {
+    rss: `${Math.round(used.rss / 1024 / 1024)}MB`,
+    heapTotal: `${Math.round(used.heapTotal / 1024 / 1024)}MB`,
+    heapUsed: `${Math.round(used.heapUsed / 1024 / 1024)}MB`
+  });
+}, 5000);
 ```
 
-#### 在路由中使用
+## ❓ 常见问题
 
-```javascript
-const auth = require('../middleware/auth');
-const express = require('express');
-const router = express.Router();
+### Q1: 数据库连接失败
 
-// 需要认证的路由
-router.post('/', auth, async (req, res) => {
-  // 业务逻辑...
-});
-
-module.exports = router;
+**问题：**
+```
+❌ 数据库连接失败: connect ECONNREFUSED
 ```
 
-## 前端开发
+**解决方案：**
+1. 检查 MySQL 服务是否启动
+2. 验证 `.env` 配置是否正确
+3. 检查防火墙设置
+4. 确认数据库用户权限
 
-### 1. 添加新的前端页面
+### Q2: 端口被占用
 
-在 `public/` 目录下创建新的HTML文件：
-
-```html
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>分类管理</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .category-item {
-            border: 1px solid #ddd;
-            padding: 15px;
-            margin-bottom: 15px;
-            border-radius: 4px;
-        }
-    </style>
-</head>
-<body>
-    <h1>分类管理</h1>
-    <div id="categoriesContainer"></div>
-
-    <script>
-        async function loadCategories() {
-            try {
-                const response = await fetch('/categories');
-                const categories = await response.json();
-                
-                const container = document.getElementById('categoriesContainer');
-                container.innerHTML = categories.map(category => `
-                    <div class="category-item">
-                        <h3>${category.name}</h3>
-                        <p>${category.description}</p>
-                    </div>
-                `).join('');
-            } catch (error) {
-                console.error('加载失败:', error);
-            }
-        }
-
-        // 初始化加载
-        loadCategories();
-    </script>
-</body>
-</html>
+**问题：**
+```
+Error: listen EADDRINUSE: address already in use :::3000
 ```
 
-### 2. 使用现代前端框架
-
-如果需要使用Vue、React等现代框架：
-
-1. 在 `public/` 目录创建子目录
-2. 设置构建流程
-3. 将构建结果复制到 `public/` 目录
-
-## 性能优化
-
-### 1. 数据库优化
-
-- 使用索引优化查询
-- 实现分页查询
-- 使用连接池
-
-### 2. 缓存策略
-
-```javascript
-const NodeCache = require('node-cache');
-const cache = new NodeCache();
-
-// 缓存文章列表5分钟
-router.get('/', async (req, res) => {
-  const cacheKey = 'articles_all';
-  let articles = cache.get(cacheKey);
-  
-  if (!articles) {
-    articles = await Article.findAll();
-    cache.set(cacheKey, articles, 300);
-  }
-  
-  res.json(articles);
-});
-```
-
-### 3. 错误监控
-
-```javascript
-// 在 index.js 中添加
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('未处理的Promise拒绝:', reason);
-  // 发送到错误监控服务
-});
-
-process.on('uncaughtException', (error) => {
-  console.error('未捕获的异常:', error);
-  // 发送到错误监控服务
-});
-```
-
-## 测试
-
-### 1. 单元测试
-
-安装测试依赖：
+**解决方案：**
 
 ```bash
-npm install --save-dev jest supertest
+# 查找占用端口的进程
+netstat -ano | findstr :3000  # Windows
+lsof -i :3000                 # Linux/Mac
+
+# 杀死进程
+taskkill /PID <PID> /F        # Windows
+kill -9 <PID>                 # Linux/Mac
+
+# 或修改端口
+# 在 .env 中设置 PORT=3001
 ```
 
-创建测试文件 `tests/articles.test.js`：
+### Q3: 依赖安装失败
 
-```javascript
-const request = require('supertest');
-const app = require('../index');
-
-describe('文章API测试', () => {
-  test('GET /articles 应该返回文章列表', async () => {
-    const response = await request(app)
-      .get('/articles')
-      .expect(200);
-    
-    expect(Array.isArray(response.body)).toBe(true);
-  });
-
-  test('POST /articles 应该创建新文章', async () => {
-    const newArticle = {
-      title: '测试文章',
-      summary: '这是测试摘要',
-      date: '2024-01-20',
-      tags: ['测试', 'API']
-    };
-
-    const response = await request(app)
-      .post('/articles')
-      .send(newArticle)
-      .expect(201);
-
-    expect(response.body.title).toBe(newArticle.title);
-  });
-});
+**问题：**
+```
+npm ERR! code ELIFECYCLE
 ```
 
-### 2. API测试脚本
-
-创建 `test-api.js`：
-
-```javascript
-const fetch = require('node-fetch');
-
-async function testAPI() {
-  try {
-    // 测试获取文章
-    const articlesResponse = await fetch('http://localhost:3000/articles');
-    const articles = await articlesResponse.json();
-    console.log('文章数量:', articles.length);
-
-    // 测试创建文章
-    const newArticle = {
-      title: 'API测试文章',
-      summary: '这是API测试的摘要',
-      date: '2024-01-20',
-      tags: ['测试', 'API']
-    };
-
-    const createResponse = await fetch('http://localhost:3000/articles', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(newArticle),
-    });
-
-    const createdArticle = await createResponse.json();
-    console.log('创建的文章ID:', createdArticle.id);
-
-  } catch (error) {
-    console.error('API测试失败:', error);
-  }
-}
-
-testAPI();
-```
-
-## 调试技巧
-
-### 1. 使用日志
-
-```javascript
-// 添加日志中间件
-app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
-  next();
-});
-```
-
-### 2. 数据库查询日志
-
-```javascript
-// 在 db.js 中添加查询日志
-const pool = mysql.createPool({
-  // ... 其他配置
-});
-
-pool.on('connection', (connection) => {
-  console.log('新的数据库连接已建立');
-});
-
-pool.on('error', (err) => {
-  console.error('数据库连接错误:', err);
-});
-```
-
-### 3. 错误调试
-
-```javascript
-// 详细的错误信息
-app.use((err, req, res, next) => {
-  console.error('错误堆栈:', err.stack);
-  console.error('错误信息:', err.message);
-  res.status(500).json({ 
-    message: err.message,
-    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
-  });
-});
-```
-
-## 代码质量
-
-### 1. ESLint配置
-
-创建 `.eslintrc.js`：
-
-```javascript
-module.exports = {
-  env: {
-    node: true,
-    es2021: true,
-  },
-  extends: [
-    'eslint:recommended',
-  ],
-  parserOptions: {
-    ecmaVersion: 12,
-    sourceType: 'module',
-  },
-  rules: {
-    'no-console': 'warn',
-    'no-unused-vars': 'error',
-  },
-};
-```
-
-### 2. 代码格式化
+**解决方案：**
 
 ```bash
-npm install --save-dev prettier
+# 清除缓存
+npm cache clean --force
+
+# 删除 node_modules 和 package-lock.json
+rm -rf node_modules package-lock.json
+
+# 重新安装
+npm install
 ```
 
-在 `package.json` 中添加脚本：
+### Q4: 请求被限流
 
+**问题：**
 ```json
 {
-  "scripts": {
-    "format": "prettier --write \"**/*.{js,html,css,md}\"",
-    "lint": "eslint ."
-  }
+  "error": "Too Many Requests",
+  "message": "请求过于频繁"
 }
 ```
 
-## 部署准备
+**解决方案：**
+1. 等待 15 分钟后重试
+2. 减少请求频率
+3. 开发环境可临时调整限流配置
 
-### 1. 生产环境配置
+### Q5: 事务回滚
 
-创建 `.env.production`：
-
-```env
-NODE_ENV=production
-PORT=3000
-
-# 生产数据库配置
-DB_HOST=your-production-db-host
-DB_USER=your-production-db-user
-DB_PASSWORD=your-production-db-password
-DB_DATABASE=your-production-db-name
+**问题：**
+```
+❌ 创建文章失败: 标签必须是数组
 ```
 
-### 2. 构建脚本
+**解决方案：**
+1. 检查请求数据格式
+2. 确保 tags 字段是数组类型
+3. 查看详细错误日志
 
-```json
-{
-  "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js",
-    "build": "echo 'Build step completed'",
-    "test": "jest",
-    "lint": "eslint .",
-    "format": "prettier --write ."
-  }
-}
-```
+## 📚 学习资源
 
-## 最佳实践
+### 官方文档
 
-1. **错误处理**: 始终处理异步操作的错误
-2. **数据验证**: 验证所有输入数据
-3. **安全性**: 使用参数化查询防止SQL注入
-4. **日志记录**: 记录关键操作和错误
-5. **测试覆盖**: 为关键功能编写测试
-6. **文档更新**: 及时更新API文档
+- [Node.js 文档](https://nodejs.org/docs/)
+- [Express 文档](https://expressjs.com/)
+- [MySQL 文档](https://dev.mysql.com/doc/)
 
-## 常见问题
+### 推荐教程
 
-### 1. 数据库连接失败
+- [Node.js 最佳实践](https://github.com/goldbergyoni/nodebestpractices)
+- [Express 安全最佳实践](https://expressjs.com/en/advanced/best-practice-security.html)
+- [MySQL 性能优化](https://dev.mysql.com/doc/refman/8.0/en/optimization.html)
 
-- 检查数据库服务是否运行
-- 验证连接参数
-- 检查防火墙设置
+## 🤝 贡献指南
 
-### 2. CORS错误
+欢迎贡献代码！请遵循以下步骤：
 
-- 确认CORS配置正确
-- 检查请求头设置
-- 验证域名白名单
-
-### 3. 性能问题
-
-- 优化数据库查询
-- 实现缓存机制
-- 使用分页查询
-
-## 贡献指南
-
-1. Fork项目
+1. Fork 项目
 2. 创建功能分支
-3. 编写测试
-4. 提交代码
-5. 创建Pull Request
+3. 提交代码
+4. 发起 Pull Request
 
-## 许可证
+**Pull Request 要求：**
+- 代码符合规范
+- 包含必要的测试
+- 更新相关文档
+- 通过 CI 检查
 
-本项目采用MIT许可证。
+---
+
+**文档版本**: 1.0.0
+**最后更新**: 2024-12-25

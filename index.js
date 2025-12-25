@@ -26,22 +26,25 @@ async function startServer() {
     app.use(express.json(security.limits));
     app.use(express.urlencoded({ extended: true, ...security.limits }));
     
-    // 5. 配置请求日志
+    // 5. 应用请求限制中间件
+    app.use(security.rateLimiter);
+    
+    // 6. 配置请求日志
     app.use((req, res, next) => {
       console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
       next();
     });
     
-    // 6. 测试数据库连接
+    // 7. 测试数据库连接
     const dbConnected = await database.testConnection();
     if (!dbConnected) {
       console.warn('⚠️ 数据库连接失败，但服务器仍将继续启动');
     }
     
-    // 7. 配置路由
+    // 8. 配置路由
     routes.setup(app);
     
-    // 8. 错误处理
+    // 9. 错误处理
     app.use((err, req, res, next) => {
       console.error('Error:', err.message);
       res.status(500).json({ 
@@ -50,7 +53,7 @@ async function startServer() {
       });
     });
     
-    // 9. 启动 HTTP 服务器
+    // 10. 启动 HTTP 服务器
     const server = app.listen(config.port, () => {
       console.log(`🚀 服务器运行在: http://localhost:${config.port}`);
 

@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文章管理系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #0f1419;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .admin-bar {
+            background: #1a1f2e;
+            padding: 15px 30px;
+            border-bottom: 1px solid #2d3748;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .admin-bar label {
+            font-weight: 600;
+            color: #a0aec0;
+            white-space: nowrap;
+        }
+
+        .admin-bar input {
+            flex: 1;
+            max-width: 400px;
+            padding: 8px 12px;
+            border: 1px solid #2d3748;
+            background: #0f1419;
+            color: #e2e8f0;
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+
+        .admin-bar input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .admin-bar .btn-clear {
+            padding: 8px 16px;
+            background: #4b5563;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .admin-bar .btn-clear:hover {
+            background: #374151;
+        }
+
+        .password-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            color: #10b981;
+            font-weight: 600;
+        }
+
+        .password-status.empty {
+            color: #ef4444;
+        }
+
+        .tabs {
+            display: flex;
+            background: #1a1f2e;
+            border-bottom: 2px solid #2d3748;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            background: #1a1f2e;
+            border: none;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #a0aec0;
+            transition: all 0.3s;
+        }
+
+        .tab:hover {
+            background: #2d3748;
+        }
+
+        .tab.active {
+            background: #0f1419;
+            color: #3b82f6;
+            border-bottom: 3px solid #3b82f6;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .view {
+            display: none;
+        }
+
+        .view.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 文章列表样式 */
+        .article-item {
+            border: 1px solid #2d3748;
+            background: #1a1f2e;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .article-item:hover {
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+            transform: translateY(-2px);
+            border-color: #3b82f6;
+        }
+
+        .article-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .article-title {
+            font-size: 1.5rem;
+            color: #e2e8f0;
+            font-weight: 600;
+        }
+
+        .article-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-secondary {
+            background: #4b5563;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #374151;
+        }
+
+        .article-summary {
+            color: #94a3b8;
+            margin-bottom: 12px;
+            line-height: 1.6;
+        }
+
+        .article-content {
+            margin-top: 15px;
+            padding: 15px;
+            background: #0f1419;
+            border: 1px solid #2d3748;
+            border-radius: 6px;
+            display: none;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            color: #cbd5e1;
+        }
+
+        .article-content.show {
+            display: block;
+        }
+
+        .article-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #2d3748;
+        }
+
+        .article-date {
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+
+        .tag-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tag {
+            background: #1e3a8a;
+            color: #93c5fd;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 0.85rem;
+        }
+
+        /* 表单样式 */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #a0aec0;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #2d3748;
+            background: #0f1419;
+            color: #e2e8f0;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .message.success {
+            background: #064e3b;
+            color: #6ee7b7;
+            border: 1px solid #10b981;
+            display: block;
+        }
+
+        .message.error {
+            background: #7f1d1d;
+            color: #fca5a5;
+            border: 1px solid #ef4444;
+            display: block;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #94a3b8;
+        }
+
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #94a3b8;
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .admin-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .admin-bar input {
+                max-width: 100%;
+            }
+
+            .admin-bar .btn-clear {
+                width: 100%;
+            }
+
+            .article-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .article-footer {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .form-actions {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+
+        .toggle-content-btn {
+            background: none;
+            border: none;
+            color: #3b82f6;
+            cursor: pointer;
+            font-size: 0.9rem;
+            text-decoration: underline;
+            padding: 0;
+            margin-top: 10px;
+        }
+
+        .toggle-content-btn:hover {
+            color: #60a5fa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📝 文章管理系统</h1>
+            <p>轻松管理您的文章内容</p>
+        </div>
+
+        <!-- 统一管理员密码输入栏 -->
+        <div class="admin-bar">
+            <label for="adminPassword">🔐 管理员密码:</label>
+            <input type="password" id="adminPassword" placeholder="请输入管理员密码以进行编辑和删除操作" oninput="updatePasswordStatus()">
+            <button class="btn-clear" onclick="clearPassword()">清除</button>
+            <span id="passwordStatus" class="password-status empty">● 未输入</span>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('list')">📋 文章列表</button>
+            <button class="tab" onclick="switchTab('create')">➕ 创建文章</button>
+        </div>
+
+        <div class="content">
+            <!-- 文章列表视图 -->
+            <div id="listView" class="view active">
+                <div id="articlesContainer"></div>
+            </div>
+
+            <!-- 创建文章视图 -->
+            <div id="createView" class="view">
+                <h2 style="margin-bottom: 20px;">创建新文章</h2>
+                <div id="createMessage" class="message"></div>
+                <form id="createForm">
+                    <div class="form-group">
+                        <label for="createTitle">文章标题 *</label>
+                        <input type="text" id="createTitle" class="form-control" required placeholder="请输入文章标题">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="createSummary">文章摘要 *</label>
+                        <textarea id="createSummary" class="form-control" rows="3" required placeholder="请输入文章摘要"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="createDate">发布日期 *</label>
+                        <input type="date" id="createDate" class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="createTags">标签（逗号分隔）</label>
+                        <input type="text" id="createTags" class="form-control" placeholder="例如：Vue, JavaScript, 前端">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="createContent">文章内容 *</label>
+                        <textarea id="createContent" class="form-control" rows="10" required placeholder="请输入文章详细内容..."></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-success">✓ 创建文章</button>
+                        <button type="button" class="btn btn-secondary" onclick="resetCreateForm()">↻ 重置表单</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- 编辑文章视图 -->
+            <div id="editView" class="view">
+                <h2 style="margin-bottom: 20px;">编辑文章</h2>
+                <div id="editMessage" class="message"></div>
+                <div id="editLoading" class="loading">正在加载文章数据</div>
+                <form id="editForm" style="display: none;">
+                    <input type="hidden" id="editArticleId">
+
+                    <div class="form-group">
+                        <label for="editTitle">文章标题 *</label>
+                        <input type="text" id="editTitle" class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editSummary">文章摘要 *</label>
+                        <textarea id="editSummary" class="form-control" rows="3" required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editDate">发布日期 *</label>
+                        <input type="date" id="editDate" class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editTags">标签（逗号分隔）</label>
+                        <input type="text" id="editTags" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editContent">文章内容 *</label>
+                        <textarea id="editContent" class="form-control" rows="10" required></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">✓ 更新文章</button>
+                        <button type="button" class="btn btn-secondary" onclick="switchTab('list')">← 返回列表</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentView = 'list';
+        let articles = [];
+
+        // 更新密码状态显示
+        function updatePasswordStatus() {
+            const password = document.getElementById('adminPassword').value;
+            const statusElement = document.getElementById('passwordStatus');
+
+            if (password) {
+                statusElement.textContent = '● 已输入';
+                statusElement.className = 'password-status';
+            } else {
+                statusElement.textContent = '● 未输入';
+                statusElement.className = 'password-status empty';
+            }
+        }
+
+        // 清除密码
+        function clearPassword() {
+            document.getElementById('adminPassword').value = '';
+            updatePasswordStatus();
+        }
+
+        // 切换标签页
+        function switchTab(view) {
+            // 更新标签状态
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // 更新视图
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+
+            if (view === 'list') {
+                document.getElementById('listView').classList.add('active');
+                loadArticles();
+            } else if (view === 'create') {
+                document.getElementById('createView').classList.add('active');
+                // 设置默认日期为今天
+                document.getElementById('createDate').valueAsDate = new Date();
+            } else if (view === 'edit') {
+                document.getElementById('editView').classList.add('active');
+            }
+
+            currentView = view;
+        }
+
+        // 加载文章列表
+        async function loadArticles() {
+            const container = document.getElementById('articlesContainer');
+            container.innerHTML = '<div class="loading">正在加载文章列表</div>';
+
+            try {
+                const response = await fetch('/articles');
+                const result = await response.json();
+
+                if (!result.success) {
+                    throw new Error(result.message || '加载失败');
+                }
+
+                articles = result.data || [];
+
+                if (articles.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📭</div>
+                            <h3>暂无文章</h3>
+                            <p>点击"创建文章"开始添加您的第一篇文章</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = articles.map(article => {
+                    const dateObj = new Date(article.date);
+                    const formattedDate = dateObj.toLocaleDateString('zh-CN');
+
+                    const tagsDisplay = article.tags && article.tags.length > 0
+                        ? `<div class="tag-container">${article.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}</div>`
+                        : '<span style="color: #999; font-style: italic;">无标签</span>';
+
+                    return `
+                        <div class="article-item">
+                            <div class="article-header">
+                                <h3 class="article-title">${article.title}</h3>
+                                <div class="article-actions">
+                                    <button class="btn btn-primary" onclick="editArticle(${article.id})">✏️ 编辑</button>
+                                    <button class="btn btn-danger" onclick="deleteArticle(${article.id})">🗑️ 删除</button>
+                                </div>
+                            </div>
+                            <p class="article-summary">${article.summary || '无摘要'}</p>
+                            <button class="toggle-content-btn" onclick="toggleContent(${article.id})">查看全文 ▼</button>
+                            <div class="article-content" id="content-${article.id}">${article.content || '无内容'}</div>
+                            <div class="article-footer">
+                                <span class="article-date">📅 ${formattedDate}</span>
+                                <div>🏷️ ${tagsDisplay}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('加载失败:', error);
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">❌</div>
+                        <h3>加载失败</h3>
+                        <p>${error.message}</p>
+                        <button class="btn btn-primary" onclick="loadArticles()">重试</button>
+                    </div>
+                `;
+            }
+        }
+
+        // 切换文章内容显示
+        function toggleContent(id) {
+            const contentElement = document.getElementById(`content-${id}`);
+            const buttonElement = event.target;
+
+            if (contentElement.classList.contains('show')) {
+                contentElement.classList.remove('show');
+                buttonElement.textContent = '查看全文 ▼';
+            } else {
+                contentElement.classList.add('show');
+                buttonElement.textContent = '收起全文 ▲';
+            }
+        }
+
+        // 编辑文章
+        async function editArticle(id) {
+            // 切换到编辑视图
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById('editView').classList.add('active');
+
+            const loading = document.getElementById('editLoading');
+            const form = document.getElementById('editForm');
+            const message = document.getElementById('editMessage');
+
+            loading.style.display = 'block';
+            form.style.display = 'none';
+            message.style.display = 'none';
+
+            try {
+                const response = await fetch(`/articles/${id}`);
+                const result = await response.json();
+
+                if (!result.success) {
+                    throw new Error(result.message || '加载失败');
+                }
+
+                const article = result.data;
+
+                // 填充表单
+                document.getElementById('editArticleId').value = article.id;
+                document.getElementById('editTitle').value = article.title;
+                document.getElementById('editSummary').value = article.summary || '';
+                document.getElementById('editDate').value = new Date(article.date).toISOString().split('T')[0];
+                document.getElementById('editTags').value = article.tags ? article.tags.join(', ') : '';
+                document.getElementById('editContent').value = article.content || '';
+
+                loading.style.display = 'none';
+                form.style.display = 'block';
+            } catch (error) {
+                loading.style.display = 'none';
+                showMessage('editMessage', error.message, 'error');
+            }
+        }
+
+        // 删除文章
+        async function deleteArticle(id) {
+            const adminPassword = document.getElementById('adminPassword').value;
+
+            if (!adminPassword) {
+                alert('❌ 请先输入管理员密码！');
+                return;
+            }
+
+            if (!confirm('⚠️ 确定要删除这篇文章吗？此操作不可恢复！')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/articles/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'x-password': adminPassword
+                    }
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('✅ 删除成功！');
+                    loadArticles();
+                } else {
+                    alert(`❌ 删除失败: ${result.message}`);
+                }
+            } catch (error) {
+                alert(`❌ 请求错误: ${error.message}`);
+            }
+        }
+
+        // 创建文章表单提交
+        document.getElementById('createForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const adminPassword = document.getElementById('adminPassword').value;
+
+            if (!adminPassword) {
+                showMessage('createMessage', '❌ 请先在顶部输入管理员密码！', 'error');
+                return;
+            }
+
+            const formData = {
+                title: document.getElementById('createTitle').value,
+                summary: document.getElementById('createSummary').value,
+                date: document.getElementById('createDate').value,
+                tags: document.getElementById('createTags').value.split(',').map(tag => tag.trim()).filter(tag => tag),
+                content: document.getElementById('createContent').value
+            };
+
+            try {
+                const response = await fetch('/articles', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-password': adminPassword
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showMessage('createMessage', '✅ 文章创建成功！', 'success');
+                    document.getElementById('createForm').reset();
+                    setTimeout(() => {
+                        switchTab('list');
+                    }, 1500);
+                } else {
+                    showMessage('createMessage', `❌ 创建失败: ${result.message}`, 'error');
+                }
+            } catch (error) {
+                showMessage('createMessage', `❌ 请求错误: ${error.message}`, 'error');
+            }
+        });
+
+        // 编辑文章表单提交
+        document.getElementById('editForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const adminPassword = document.getElementById('adminPassword').value;
+
+            if (!adminPassword) {
+                showMessage('editMessage', '❌ 请先在顶部输入管理员密码！', 'error');
+                return;
+            }
+
+            const id = document.getElementById('editArticleId').value;
+            const formData = {
+                title: document.getElementById('editTitle').value,
+                summary: document.getElementById('editSummary').value,
+                date: document.getElementById('editDate').value,
+                tags: document.getElementById('editTags').value.split(',').map(tag => tag.trim()).filter(tag => tag),
+                content: document.getElementById('editContent').value
+            };
+
+            try {
+                const response = await fetch(`/articles/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-password': adminPassword
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showMessage('editMessage', '✅ 文章更新成功！', 'success');
+                    setTimeout(() => {
+                        switchTab('list');
+                    }, 1500);
+                } else {
+                    showMessage('editMessage', `❌ 更新失败: ${result.message}`, 'error');
+                }
+            } catch (error) {
+                showMessage('editMessage', `❌ 请求错误: ${error.message}`, 'error');
+            }
+        });
+
+        // 显示消息
+        function showMessage(elementId, message, type) {
+            const messageElement = document.getElementById(elementId);
+            messageElement.textContent = message;
+            messageElement.className = `message ${type}`;
+            messageElement.style.display = 'block';
+
+            setTimeout(() => {
+                messageElement.style.display = 'none';
+            }, 5000);
+        }
+
+        // 重置创建表单
+        function resetCreateForm() {
+            document.getElementById('createForm').reset();
+            document.getElementById('createDate').valueAsDate = new Date();
+            document.getElementById('createMessage').style.display = 'none';
+        }
+
+        // 清除密码
+        function clearPassword() {
+            document.getElementById('adminPassword').value = '';
+            alert('✅ 密码已清除');
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            loadArticles();
+            document.getElementById('createDate').valueAsDate = new Date();
+        });
+    </script>
+</body>
+</html>

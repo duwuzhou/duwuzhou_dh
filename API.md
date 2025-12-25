@@ -1,288 +1,764 @@
-# API 文档
+# 📡 API 详细文档
 
-## 概述
+文章管理系统 RESTful API 完整参考文档。
 
-这是一个基于Node.js和Express的后端API服务，提供文章管理和用户管理功能。所有API响应格式为JSON，支持CORS跨域请求。
+## 📌 基础信息
 
-## 基础信息
-
-- **基础URL**: `http://localhost:3000` (本地开发)
-- **数据格式**: JSON
+- **Base URL**: `http://localhost:3000` (开发环境)
+- **Content-Type**: `application/json`
 - **字符编码**: UTF-8
-- **跨域支持**: 已启用，允许 `https://duwuzhou.github.io`
+- **API 版本**: v2.0
+- **管理界面**: `http://localhost:3000/article_manager.html`
 
-## 文章管理 API
+## 🎨 Web 管理界面
 
-### 1. 获取所有文章
+系统提供了一个现代化的 Web 管理界面，无需编写代码即可管理文章。
 
-获取所有文章列表，支持分页功能。
+### 访问地址
 
-**请求信息**
+```
+http://localhost:3000/article_manager.html
+```
+
+### 界面特性
+
+- ✅ **统一密码管理**：顶部统一输入管理员密码，全局可用
+- ✅ **标签页切换**：文章列表和创建文章通过标签页切换
+- ✅ **实时状态**：密码输入状态实时显示（已输入/未输入）
+- ✅ **文章列表**：查看所有文章，支持展开/收起全文
+- ✅ **创建文章**：完整的文章创建表单
+- ✅ **编辑文章**：点击编辑按钮即可修改文章
+- ✅ **删除文章**：带二次确认的删除功能
+- ✅ **响应式设计**：完美适配移动端和桌面端
+- ✅ **友好提示**：操作成功/失败都有明确提示
+
+### 使用流程
+
+1. 访问管理界面
+2. 在顶部输入管理员密码
+3. 查看文章列表或创建新文章
+4. 编辑或删除现有文章
+
+## 🔐 认证方式
+
+### 密码认证
+
+所有写操作（POST、PUT、DELETE）需要提供管理员密码。
+
+**方式一：请求头（推荐）**
+
 ```http
-GET /articles
+x-password: your_admin_password
 ```
 
-**请求参数**
-| 参数 | 类型 | 必需 | 说明 |
-|------|------|------|------|
-| page | number | 否 | 页码，默认为1 |
-| pageSize | number | 否 | 每页数量，默认为10 |
-
-**响应示例**
-```json
-[
-  {
-    "id": 1,
-    "title": "Vue3组合式API入门指南",
-    "summary": "详细介绍Vue3中组合式API的使用方法和最佳实践",
-    "date": "2024-01-15",
-    "tags": ["Vue3", "前端", "JavaScript"]
-  },
-  {
-    "id": 2,
-    "title": "Node.js性能优化技巧",
-    "summary": "分享Node.js应用性能优化的实用技巧和经验",
-    "date": "2024-01-10",
-    "tags": ["Node.js", "性能优化", "后端"]
-  }
-]
-```
-
-**状态码**
-- `200 OK`: 请求成功
-- `500 Internal Server Error`: 服务器内部错误
-
-### 2. 创建新文章
-
-创建一篇新的文章。
-
-**请求信息**
-```http
-POST /articles
-Content-Type: application/json
-```
-
-**请求体**
-```json
-{
-  "title": "新文章标题",
-  "summary": "文章内容摘要",
-  "date": "2024-01-20",
-  "tags": ["标签1", "标签2", "标签3"]
-}
-```
-
-**字段说明**
-| 字段 | 类型 | 必需 | 说明 |
-|------|------|------|------|
-| title | string | 是 | 文章标题，长度限制255字符 |
-| summary | string | 是 | 文章摘要 |
-| date | string | 是 | 文章日期，格式：YYYY-MM-DD |
-| tags | array | 是 | 标签数组，每个标签为字符串 |
-
-**响应示例**
-```json
-{
-  "id": 3,
-  "title": "新文章标题",
-  "summary": "文章内容摘要",
-  "date": "2024-01-20",
-  "tags": ["标签1", "标签2", "标签3"]
-}
-```
-
-**状态码**
-- `201 Created`: 创建成功
-- `400 Bad Request`: 请求参数错误
-- `500 Internal Server Error`: 服务器内部错误
-
-### 3. 删除文章
-
-删除指定的文章。
-
-**请求信息**
-```http
-DELETE /articles/:id
-```
-
-**路径参数**
-| 参数 | 类型 | 说明 |
-|------|------|------|
-| id | number | 文章ID |
-
-**响应**
-- 成功：返回 `204 No Content`
-- 失败：返回错误信息
-
-**状态码**
-- `204 No Content`: 删除成功
-- `404 Not Found`: 文章未找到
-- `500 Internal Server Error`: 服务器内部错误
-
-## 用户管理 API
-
-### 1. 获取用户列表
-
-获取所有用户列表（目前返回模拟数据）。
-
-**请求信息**
-```http
-GET /users
-```
-
-**响应示例**
-```json
-[
-  {
-    "id": 1,
-    "name": "用户1"
-  },
-  {
-    "id": 2,
-    "name": "用户2"
-  }
-]
-```
-
-**状态码**
-- `200 OK`: 请求成功
-
-## 错误处理
-
-所有API在发生错误时会返回统一的错误格式：
+**方式二：请求体**
 
 ```json
 {
-  "message": "错误描述信息"
+  "password": "your_admin_password",
+  ...其他字段
 }
 ```
 
-### 常见错误码
+**注意**：Web 管理界面自动使用请求头方式传递密码。
+
+## 📊 响应格式
+
+### 成功响应
+
+```json
+{
+  "success": true,
+  "data": {},
+  "message": "操作成功",
+  "timestamp": "2024-12-25T14:30:00.000Z"
+}
+```
+
+### 错误响应
+
+```json
+{
+  "success": false,
+  "error": "Error Type",
+  "message": "错误描述",
+  "details": "详细信息"
+}
+```
+
+### HTTP 状态码
 
 | 状态码 | 说明 |
 |--------|------|
+| 200 | 请求成功 |
+| 201 | 创建成功 |
 | 400 | 请求参数错误 |
-| 404 | 资源未找到 |
+| 401 | 未授权（缺少密码） |
+| 403 | 禁止访问（密码错误） |
+| 404 | 资源不存在 |
+| 429 | 请求过于频繁 |
 | 500 | 服务器内部错误 |
 
-## 使用示例
+## 📝 API 端点
 
-### JavaScript (Fetch API)
+### 1. 健康检查
+
+检查服务器运行状态。
+
+```http
+GET /health
+```
+
+**请求示例：**
+
+```bash
+curl http://localhost:3000/health
+```
+
+**响应示例：**
+
+```json
+{
+  "status": "ok",
+  "timestamp": "2024-12-25T14:30:00.000Z",
+  "uptime": 123.456
+}
+```
+
+---
+
+### 2. 获取文章列表
+
+获取所有文章，支持分页和排序。
+
+```http
+GET /articles?page=1&pageSize=10&sortBy=date&order=DESC
+```
+
+**查询参数：**
+
+| 参数 | 类型 | 必填 | 默认值 | 说明 |
+|------|------|------|--------|------|
+| page | number | 否 | 1 | 页码，必须 ≥ 1 |
+| pageSize | number | 否 | 10 | 每页数量，范围 1-100 |
+| sortBy | string | 否 | date | 排序字段：id, title, date, created_at |
+| order | string | 否 | DESC | 排序方向：ASC, DESC |
+
+**请求示例：**
+
+```bash
+# 获取第一页，每页10条
+curl "http://localhost:3000/articles?page=1&pageSize=10"
+
+# 按标题升序排列
+curl "http://localhost:3000/articles?sortBy=title&order=ASC"
+
+# 获取最新的5篇文章
+curl "http://localhost:3000/articles?pageSize=5&sortBy=created_at&order=DESC"
+```
+
+**响应示例：**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "title": "Vue 3 入门指南",
+      "summary": "从零开始学习 Vue 3",
+      "date": "2024-01-15",
+      "content": "Vue 3 是一个渐进式 JavaScript 框架...",
+      "tags": ["Vue", "JavaScript", "前端"],
+      "created_at": "2024-01-15T10:00:00.000Z"
+    },
+    {
+      "id": 2,
+      "title": "TypeScript 最佳实践",
+      "summary": "TypeScript 开发技巧总结",
+      "date": "2024-01-20",
+      "content": "TypeScript 是 JavaScript 的超集...",
+      "tags": ["TypeScript", "JavaScript"],
+      "created_at": "2024-01-20T15:30:00.000Z"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "pageSize": 10,
+    "total": 50,
+    "totalPages": 5
+  },
+  "timestamp": "2024-12-25T14:30:00.000Z"
+}
+```
+
+**错误响应：**
+
+```json
+{
+  "success": false,
+  "error": "Bad Request",
+  "message": "页码必须是大于0的整数"
+}
+```
+
+---
+
+### 3. 获取单篇文章
+
+根据 ID 获取文章详情。
+
+```http
+GET /articles/:id
+```
+
+**路径参数：**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| id | number | 是 | 文章ID |
+
+**请求示例：**
+
+```bash
+curl http://localhost:3000/articles/1
+```
+
+**响应示例：**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "title": "Vue 3 入门指南",
+    "summary": "从零开始学习 Vue 3",
+    "date": "2024-01-15",
+    "content": "Vue 3 是一个渐进式 JavaScript 框架，用于构建用户界面...",
+    "tags": ["Vue", "JavaScript", "前端"],
+    "created_at": "2024-01-15T10:00:00.000Z"
+  },
+  "timestamp": "2024-12-25T14:30:00.000Z"
+}
+```
+
+**错误响应（文章不存在）：**
+
+```json
+{
+  "success": false,
+  "error": "Not Found",
+  "message": "文章未找到",
+  "articleId": "999"
+}
+```
+
+**错误响应（无效ID）：**
+
+```json
+{
+  "success": false,
+  "error": "Bad Request",
+  "message": "无效的文章ID"
+}
+```
+
+---
+
+### 4. 创建文章
+
+创建新文章（需要管理员密码）。
+
+```http
+POST /articles
+Content-Type: application/json
+x-password: your_admin_password
+```
+
+**请求体：**
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| title | string | 是 | 文章标题，最大255字符 |
+| summary | string | 是 | 文章摘要 |
+| date | string | 是 | 发布日期，格式：YYYY-MM-DD |
+| content | string | 否 | 文章内容 |
+| tags | array | 否 | 标签数组，字符串类型 |
+
+**请求示例：**
+
+```bash
+curl -X POST http://localhost:3000/articles \
+  -H "Content-Type: application/json" \
+  -H "x-password: admin123" \
+  -d '{
+    "title": "Node.js 性能优化",
+    "summary": "提升 Node.js 应用性能的10个技巧",
+    "date": "2024-12-25",
+    "content": "Node.js 是一个基于 Chrome V8 引擎的 JavaScript 运行时...",
+    "tags": ["Node.js", "性能优化", "后端"]
+  }'
+```
+
+**响应示例：**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 3,
+    "title": "Node.js 性能优化",
+    "summary": "提升 Node.js 应用性能的10个技巧",
+    "date": "2024-12-25",
+    "content": "Node.js 是一个基于 Chrome V8 引擎的 JavaScript 运行时...",
+    "tags": ["Node.js", "性能优化", "后端"]
+  },
+  "message": "文章创建成功",
+  "timestamp": "2024-12-25T14:30:00.000Z"
+}
+```
+
+**错误响应（缺少必填字段）：**
+
+```json
+{
+  "success": false,
+  "error": "Bad Request",
+  "message": "缺少必填字段",
+  "required": ["title", "summary", "date"]
+}
+```
+
+**错误响应（未授权）：**
+
+```json
+{
+  "success": false,
+  "error": "Unauthorized",
+  "message": "需要提供密码",
+  "hint": "请在请求头中添加 x-password 或在请求体中添加 password 字段"
+}
+```
+
+**错误响应（密码错误）：**
+
+```json
+{
+  "success": false,
+  "error": "Forbidden",
+  "message": "密码错误"
+}
+```
+
+---
+
+### 5. 更新文章
+
+更新现有文章（需要管理员密码）。
+
+```http
+PUT /articles/:id
+Content-Type: application/json
+x-password: your_admin_password
+```
+
+**路径参数：**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| id | number | 是 | 文章ID |
+
+**请求体：** 同创建文章
+
+**请求示例：**
+
+```bash
+curl -X PUT http://localhost:3000/articles/1 \
+  -H "Content-Type: application/json" \
+  -H "x-password: admin123" \
+  -d '{
+    "title": "Vue 3 完整指南（更新版）",
+    "summary": "从零开始学习 Vue 3，包含最新特性",
+    "date": "2024-12-25",
+    "content": "Vue 3 是一个渐进式 JavaScript 框架...",
+    "tags": ["Vue", "JavaScript", "前端", "教程"]
+  }'
+```
+
+**响应示例：**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "title": "Vue 3 完整指南（更新版）",
+    "summary": "从零开始学习 Vue 3，包含最新特性",
+    "date": "2024-12-25",
+    "content": "Vue 3 是一个渐进式 JavaScript 框架...",
+    "tags": ["Vue", "JavaScript", "前端", "教程"]
+  },
+  "message": "文章更新成功",
+  "timestamp": "2024-12-25T14:30:00.000Z"
+}
+```
+
+**错误响应（文章不存在）：**
+
+```json
+{
+  "success": false,
+  "error": "Not Found",
+  "message": "文章未找到",
+  "articleId": "999"
+}
+```
+
+---
+
+### 6. 删除文章
+
+删除指定文章（需要管理员密码）。
+
+```http
+DELETE /articles/:id
+x-password: your_admin_password
+```
+
+**路径参数：**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| id | number | 是 | 文章ID |
+
+**请求示例：**
+
+```bash
+curl -X DELETE http://localhost:3000/articles/1 \
+  -H "x-password: admin123"
+```
+
+**响应示例：**
+
+```json
+{
+  "success": true,
+  "message": "文章删除成功",
+  "articleId": "1",
+  "timestamp": "2024-12-25T14:30:00.000Z"
+}
+```
+
+**错误响应（文章不存在）：**
+
+```json
+{
+  "success": false,
+  "error": "Not Found",
+  "message": "文章未找到",
+  "articleId": "999"
+}
+```
+
+---
+
+## 🚦 限流规则
+
+### 通用限流
+
+- **时间窗口**: 15分钟
+- **最大请求数**: 100次/IP
+- **适用端点**: 所有端点（除健康检查）
+
+### 严格限流
+
+- **时间窗口**: 15分钟
+- **最大请求数**: 10次/IP
+- **适用端点**: POST、PUT、DELETE
+
+### 限流响应
+
+```json
+{
+  "error": "Too Many Requests",
+  "message": "请求过于频繁，请稍后再试",
+  "retryAfter": "15分钟"
+}
+```
+
+---
+
+## 🧪 测试示例
+
+### 使用 cURL
+
+```bash
+# 1. 健康检查
+curl http://localhost:3000/health
+
+# 2. 获取文章列表
+curl http://localhost:3000/articles
+
+# 3. 获取单篇文章
+curl http://localhost:3000/articles/1
+
+# 4. 创建文章
+curl -X POST http://localhost:3000/articles \
+  -H "Content-Type: application/json" \
+  -H "x-password: admin123" \
+  -d '{"title":"测试文章","summary":"测试","date":"2024-12-25","tags":["测试"]}'
+
+# 5. 更新文章
+curl -X PUT http://localhost:3000/articles/1 \
+  -H "Content-Type: application/json" \
+  -H "x-password: admin123" \
+  -d '{"title":"更新标题","summary":"更新摘要","date":"2024-12-25"}'
+
+# 6. 删除文章
+curl -X DELETE http://localhost:3000/articles/1 \
+  -H "x-password: admin123"
+```
+
+### 使用 JavaScript (Fetch API)
 
 ```javascript
 // 获取文章列表
-fetch('/articles')
-  .then(response => response.json())
-  .then(data => console.log(data))
-  .catch(error => console.error('Error:', error));
+async function getArticles() {
+  const response = await fetch('http://localhost:3000/articles?page=1&pageSize=10');
+  const data = await response.json();
+  console.log(data);
+}
 
-// 创建新文章
-fetch('/articles', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    title: '新文章',
-    summary: '文章摘要',
-    date: '2024-01-20',
-    tags: ['JavaScript', 'Node.js']
-  })
-})
-  .then(response => response.json())
-  .then(data => console.log(data))
-  .catch(error => console.error('Error:', error));
+// 创建文章
+async function createArticle() {
+  const response = await fetch('http://localhost:3000/articles', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-password': 'admin123'
+    },
+    body: JSON.stringify({
+      title: '新文章',
+      summary: '文章摘要',
+      date: '2024-12-25',
+      tags: ['JavaScript']
+    })
+  });
+  const data = await response.json();
+  console.log(data);
+}
+
+// 更新文章
+async function updateArticle(id) {
+  const response = await fetch(`http://localhost:3000/articles/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-password': 'admin123'
+    },
+    body: JSON.stringify({
+      title: '更新后的标题',
+      summary: '更新后的摘要',
+      date: '2024-12-25'
+    })
+  });
+  const data = await response.json();
+  console.log(data);
+}
 
 // 删除文章
-fetch('/articles/1', {
-  method: 'DELETE'
-})
-  .then(response => {
-    if (response.ok) {
-      console.log('删除成功');
-    } else {
-      console.error('删除失败');
+async function deleteArticle(id) {
+  const response = await fetch(`http://localhost:3000/articles/${id}`, {
+    method: 'DELETE',
+    headers: {
+      'x-password': 'admin123'
     }
-  })
-  .catch(error => console.error('Error:', error));
-```
-
-### Python (requests)
-
-```python
-import requests
-import json
-
-# 获取文章列表
-response = requests.get('http://localhost:3000/articles')
-articles = response.json()
-print(articles)
-
-# 创建新文章
-article_data = {
-    "title": "Python测试文章",
-    "summary": "这是用Python创建的文章",
-    "date": "2024-01-20",
-    "tags": ["Python", "API"]
+  });
+  const data = await response.json();
+  console.log(data);
 }
-response = requests.post('http://localhost:3000/articles', 
-                        json=article_data)
-new_article = response.json()
-print(new_article)
-
-# 删除文章
-response = requests.delete('http://localhost:3000/articles/1')
-if response.status_code == 204:
-    print("删除成功")
-else:
-    print("删除失败")
 ```
 
-## 数据库结构
+---
 
-### 文章表 (articles)
-```sql
-CREATE TABLE articles (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  title VARCHAR(255) NOT NULL,
-  summary TEXT,
-  date DATE,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+## 🖥️ Web 管理界面使用指南
+
+### 界面布局
+
+```
+┌─────────────────────────────────────────────────────┐
+│              📝 文章管理系统                         │
+│           轻松管理您的文章内容                       │
+├─────────────────────────────────────────────────────┤
+│ 🔐 管理员密码: [输入框] [清除] ● 已输入/未输入      │
+├─────────────────────────────────────────────────────┤
+│  📋 文章列表  │  ➕ 创建文章                        │
+├─────────────────────────────────────────────────────┤
+│                                                      │
+│                   内容区域                           │
+│                                                      │
+└─────────────────────────────────────────────────────┘
 ```
 
-### 标签表 (tags)
-```sql
-CREATE TABLE tags (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(100) UNIQUE NOT NULL
-);
-```
+### 功能说明
 
-### 文章标签关联表 (article_tags)
-```sql
-CREATE TABLE article_tags (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  article_id INT,
-  tag_id INT,
-  FOREIGN KEY (article_id) REFERENCES articles(id) ON DELETE CASCADE,
-  FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
-);
-```
+#### 1. 统一密码管理
 
-## 注意事项
+**位置**：页面顶部，标题下方
 
-1. **日期格式**: 所有日期字段使用 `YYYY-MM-DD` 格式
-2. **标签处理**: 创建文章时，如果标签不存在会自动创建
-3. **分页**: 获取文章列表时，默认每页10条记录
-4. **事务处理**: 文章创建和删除操作使用数据库事务，确保数据一致性
-5. **CORS**: API已配置CORS，允许来自 `https://duwuzhou.github.io` 的请求
+**功能**：
+- 输入管理员密码后，所有需要权限的操作都会自动使用此密码
+- 实时状态显示：
+  - 🔴 `● 未输入` - 红色，表示未输入密码
+  - 🟢 `● 已输入` - 绿色，表示已输入密码
+- 点击"清除"按钮可清空密码
 
-## 更新日志
+**使用建议**：
+- 首次访问时先输入管理员密码
+- 密码会在整个会话期间保持，无需重复输入
+- 离开页面前建议清除密码
 
-### v1.0.0 (2024-01-20)
-- 初始版本发布
-- 文章管理功能（获取、创建、删除）
-- 标签系统支持
-- 用户API
-- 基础错误处理
+#### 2. 文章列表
+
+**功能**：
+- 查看所有文章
+- 点击"查看全文"展开文章内容
+- 点击"收起全文"隐藏文章内容
+- 点击"编辑"按钮修改文章
+- 点击"删除"按钮删除文章（需二次确认）
+
+**显示信息**：
+- 文章标题
+- 文章摘要
+- 发布日期
+- 标签列表
+- 文章内容（可展开/收起）
+
+#### 3. 创建文章
+
+**必填字段**：
+- 文章标题
+- 文章摘要
+- 发布日期
+- 文章内容
+
+**可选字段**：
+- 标签（多个标签用逗号分隔）
+
+**操作按钮**：
+- ✓ 创建文章：提交表单创建新文章
+- ↻ 重置表单：清空所有输入内容
+
+**注意事项**：
+- 创建前必须在顶部输入管理员密码
+- 日期默认为今天，可手动修改
+- 标签示例：`Vue, JavaScript, 前端`
+- 创建成功后自动跳转到文章列表
+
+#### 4. 编辑文章
+
+**进入方式**：
+- 在文章列表中点击"编辑"按钮
+
+**功能**：
+- 自动加载文章数据
+- 修改任意字段
+- 保存更新
+
+**操作按钮**：
+- ✓ 更新文章：保存修改
+- ← 返回列表：取消编辑，返回列表
+
+**注意事项**：
+- 编辑前必须在顶部输入管理员密码
+- 所有字段都可以修改
+- 更新成功后自动返回列表
+
+### 快速操作指南
+
+#### 创建第一篇文章
+
+1. 访问 `http://localhost:3000/article_manager.html`
+2. 在顶部输入管理员密码
+3. 点击"➕ 创建文章"标签
+4. 填写文章信息：
+   - 标题：`我的第一篇文章`
+   - 摘要：`这是一篇测试文章`
+   - 日期：选择今天
+   - 标签：`测试, 入门`
+   - 内容：`这是文章的详细内容...`
+5. 点击"✓ 创建文章"
+6. 等待成功提示，自动跳转到列表
+
+#### 编辑现有文章
+
+1. 在文章列表中找到要编辑的文章
+2. 点击"✏️ 编辑"按钮
+3. 修改需要更改的字段
+4. 点击"✓ 更新文章"
+5. 等待成功提示，自动返回列表
+
+#### 删除文章
+
+1. 确保已在顶部输入管理员密码
+2. 在文章列表中找到要删除的文章
+3. 点击"🗑️ 删除"按钮
+4. 在确认对话框中点击"确定"
+5. 等待删除成功提示
+
+### 常见问题
+
+**Q: 为什么操作时提示"请先在顶部输入管理员密码"？**
+
+A: 所有写操作（创建、编辑、删除）都需要管理员密码。请在页面顶部的密码输入框中输入密码。
+
+**Q: 密码输入后会保存吗？**
+
+A: 密码仅在当前会话中有效，刷新页面或关闭浏览器后需要重新输入。
+
+**Q: 如何查看文章的完整内容？**
+
+A: 在文章列表中点击"查看全文"按钮即可展开文章内容。
+
+**Q: 标签如何输入？**
+
+A: 多个标签用英文逗号分隔，例如：`Vue, JavaScript, 前端`
+
+**Q: 创建文章后为什么看不到？**
+
+A: 创建成功后会自动跳转到文章列表，新文章会显示在列表中。如果没有看到，请刷新页面。
+
+### 键盘快捷键
+
+目前暂不支持键盘快捷键，所有操作需通过鼠标点击完成。
+
+### 浏览器兼容性
+
+- ✅ Chrome 90+
+- ✅ Firefox 88+
+- ✅ Safari 14+
+- ✅ Edge 90+
+
+### 移动端使用
+
+Web 管理界面完全支持移动端访问：
+- 自动适配屏幕尺寸
+- 触摸操作友好
+- 表单输入优化
+
+---
+
+## 📌 注意事项
+
+1. **日期格式**: 必须使用 `YYYY-MM-DD` 格式
+2. **标签数组**: 必须是字符串数组，不能是其他类型
+3. **密码安全**: 生产环境请使用强密码并通过 HTTPS 传输
+4. **请求限制**: 注意限流规则，避免频繁请求
+5. **错误处理**: 始终检查 `success` 字段判断请求是否成功
+6. **Web 界面**: 推荐使用 Web 管理界面进行日常操作，更加直观便捷
+
+---
+
+**文档版本**: 2.0.0
+**最后更新**: 2024-12-25
+**新增内容**: Web 管理界面使用指南
